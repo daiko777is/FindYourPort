@@ -1,0 +1,11 @@
+[package]
+name = "fyp-cli"
+version = "0.1.0"
+edition = "2021"
+description = "Command line interface for Find Your Port"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+fyp-core = { path = "../fyp-core" }
+fyp-os = { path = "../fyp-os" }
+clap = { version = "4.0", features = ["derive"] }

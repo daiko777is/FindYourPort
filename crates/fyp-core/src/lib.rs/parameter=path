@@ -1,0 +1,11 @@
+//! Core logic for Find Your Port.
+
+pub mod app_state;
+pub mod search_engine;
+pub mod history_logger;
+pub mod settings_manager;
+
+pub use app_state::AppState;
+pub use search_engine::SearchEngine;
+pub use history_logger::HistoryLogger;
+pub use settings_manager::SettingsManager;

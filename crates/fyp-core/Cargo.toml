@@ -1,0 +1,14 @@
+[package]
+name = "fyp-core"
+version = "0.1.0"
+edition = "2021"
+description = "Core logic for Find Your Port: state, search, history, settings"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+chrono = "0.4"
+fyp-os = { path = "../fyp-os" }
+
+[lib]
+name = "fyp_core"
+path = "src/lib.rs"

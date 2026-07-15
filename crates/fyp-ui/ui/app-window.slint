@@ -1,0 +1,336 @@
+import { Button, SpinBox, HorizontalBox, VerticalBox, GroupBox } from "std-widgets.slint";
+
+// ── Colors ──
+global Colors {
+    out property <color> background: #1a1b26;
+    out property <color> surface: #24283b;
+    out property <color> border: #3d4660;
+    out property <color> accent: #7aa2f7;
+    out property <color> accent-hover: #89b0ff;
+    out property <color> text-primary: #c0caf5;
+    out property <color> text-secondary: #565f89;
+    out property <color> text-muted: #414868;
+    out property <color> open: #9ece6a;
+}
+
+// ── Data Models ──
+struct InterfaceItem {
+    name: string,
+    ips: string,
+}
+
+struct PortResult {
+    port: string,
+    service: string,
+    status: string,
+}
+
+// ── Main Window ──
+export component AppWindow inherits Window {
+    title: "Find Your Port";
+    min-width: 700px;
+    min-height: 500px;
+    preferred-width: 900px;
+    preferred-height: 600px;
+    background: Colors.background;
+
+    in property <[InterfaceItem]> interfaces;
+    in property <[PortResult]> scan-results;
+    in property <string> local-ip: "Detectando...";
+    in property <string> status-text: "Listo";
+    in property <bool> scanning: false;
+    in property <int> open-count: 0;
+    in-out property <int> scan-start: 1;
+    in-out property <int> scan-end: 1024;
+    in-out property <int> scan-timeout: 200;
+
+    callback refresh-interfaces();
+    callback scan-ports(int, int, int);
+
+    HorizontalBox {
+        // ── Left Sidebar ──
+        VerticalBox {
+            width: 280px;
+            spacing: 12px;
+            padding: 16px;
+
+            Text {
+                text: "Find Your Port";
+                font-size: 18px;
+                font-weight: 800;
+                color: Colors.accent;
+                horizontal-alignment: center;
+            }
+
+            // Local IP card
+            Rectangle {
+                height: 70px;
+                background: Colors.surface;
+                border-width: 1px;
+                border-color: Colors.border;
+                border-radius: 8px;
+
+                VerticalBox {
+                    padding: 10px;
+                    spacing: 4px;
+
+                    Text {
+                        text: "IP Local";
+                        font-size: 11px;
+                        color: Colors.text-secondary;
+                    }
+                    Text {
+                        text: root.local-ip;
+                        font-size: 15px;
+                        font-weight: 700;
+                        color: Colors.accent;
+                    }
+                }
+            }
+
+            // Interfaces section
+            GroupBox {
+                title: "Interfaces de Red";
+                VerticalBox {
+                    spacing: 4px;
+
+                    for iface[i] in root.interfaces : Rectangle {
+                        height: 48px;
+                        background: Colors.surface;
+                        border-radius: 4px;
+
+                        HorizontalBox {
+                            padding: 8px;
+                            spacing: 6px;
+
+                            Rectangle {
+                                width: 8px;
+                                height: 8px;
+                                border-radius: 4px;
+                                background: Colors.accent;
+                                y: parent.height / 2 - 4px;
+                            }
+
+                            VerticalBox {
+                                spacing: 2px;
+                                padding: 0px;
+                                padding-left: 4px;
+
+                                Text {
+                                    text: iface.name;
+                                    font-size: 12px;
+                                    font-weight: 700;
+                                    color: Colors.text-primary;
+                                    overflow: elide;
+                                }
+                                Text {
+                                    text: iface.ips;
+                                    font-size: 10px;
+                                    color: Colors.text-secondary;
+                                    overflow: elide;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Button {
+                text: "Refrescar Interfaces";
+                clicked => { root.refresh-interfaces(); }
+            }
+        }
+
+        // ── Right Panel ──
+        VerticalBox {
+            spacing: 12px;
+            padding: 16px;
+
+            // Scan controls
+            Rectangle {
+                height: 130px;
+                background: Colors.surface;
+                border-width: 1px;
+                border-color: Colors.border;
+                border-radius: 8px;
+
+                VerticalBox {
+                    padding: 14px;
+                    spacing: 10px;
+
+                    Text {
+                        text: "Escaneo de Puertos";
+                        font-size: 13px;
+                        font-weight: 700;
+                        color: Colors.text-primary;
+                    }
+
+                    HorizontalBox {
+                        spacing: 12px;
+
+                        Text {
+                            text: "Desde:";
+                            font-size: 12px;
+                            vertical-alignment: center;
+                            color: Colors.text-secondary;
+                        }
+                        SpinBox {
+                            width: 90px;
+                            minimum: 1;
+                            maximum: 65535;
+                            value: root.scan-start;
+                            edited(v) => { root.scan-start = v; }
+                        }
+
+                        Text {
+                            text: "Hasta:";
+                            font-size: 12px;
+                            vertical-alignment: center;
+                            color: Colors.text-secondary;
+                        }
+                        SpinBox {
+                            width: 90px;
+                            minimum: 1;
+                            maximum: 65535;
+                            value: root.scan-end;
+                            edited(v) => { root.scan-end = v; }
+                        }
+                    }
+
+                    HorizontalBox {
+                        spacing: 12px;
+
+                        Text {
+                            text: "Timeout (ms):";
+                            font-size: 12px;
+                            vertical-alignment: center;
+                            color: Colors.text-secondary;
+                        }
+                        SpinBox {
+                            width: 90px;
+                            minimum: 10;
+                            maximum: 5000;
+                            value: root.scan-timeout;
+                            edited(v) => { root.scan-timeout = v; }
+                        }
+
+                        Rectangle { horizontal-stretch: 1; }
+
+                        Button {
+                            text: root.scanning ? "Escaneando..." : "Escanear";
+                            enabled: !root.scanning;
+                            clicked => {
+                                root.scan-ports(root.scan-start, root.scan-end, root.scan-timeout);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Results table header
+            Rectangle {
+                height: 32px;
+                background: Colors.surface;
+                border-width: 1px;
+                border-color: Colors.border;
+                border-radius: 6px;
+
+                HorizontalBox {
+                    padding: 8px;
+                    spacing: 0px;
+
+                    Text {
+                        text: "Puerto";
+                        font-size: 11px;
+                        font-weight: 700;
+                        color: Colors.text-secondary;
+                        width: 100px;
+                    }
+                    Text {
+                        text: "Servicio";
+                        font-size: 11px;
+                        font-weight: 700;
+                        color: Colors.text-secondary;
+                        width: 160px;
+                    }
+                    Text {
+                        text: "Estado";
+                        font-size: 11px;
+                        font-weight: 700;
+                        color: Colors.text-secondary;
+                        horizontal-stretch: 1;
+                    }
+                }
+            }
+
+            // Results list
+            VerticalBox {
+                horizontal-stretch: 1;
+                vertical-stretch: 1;
+                spacing: 2px;
+
+                for result[i] in root.scan-results : Rectangle {
+                    height: 36px;
+                    background: Colors.surface;
+                    border-radius: 4px;
+
+                    HorizontalBox {
+                        padding: 10px;
+                        spacing: 0px;
+
+                        Text {
+                            text: result.port;
+                            font-size: 13px;
+                            font-weight: 700;
+                            color: Colors.accent-hover;
+                            width: 100px;
+                        }
+                        Text {
+                            text: result.service;
+                            font-size: 12px;
+                            color: Colors.text-primary;
+                            width: 160px;
+                        }
+                        Text {
+                            text: result.status;
+                            font-size: 12px;
+                            font-weight: 700;
+                            color: Colors.open;
+                            horizontal-stretch: 1;
+                        }
+                    }
+                }
+            }
+
+            // Status bar
+            Rectangle {
+                height: 36px;
+                background: Colors.surface;
+                border-width: 1px;
+                border-color: Colors.border;
+                border-radius: 6px;
+
+                HorizontalBox {
+                    padding: 10px;
+                    spacing: 12px;
+
+                    Text {
+                        text: root.status-text;
+                        font-size: 11px;
+                        color: Colors.text-secondary;
+                        horizontal-stretch: 1;
+                        vertical-alignment: center;
+                    }
+
+                    Text {
+                        text: "Puertos abiertos: " + root.open-count;
+                        font-size: 12px;
+                        font-weight: 700;
+                        color: root.open-count > 0 ? Colors.open : Colors.text-muted;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+    }
+}

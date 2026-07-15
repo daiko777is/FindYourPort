@@ -1,0 +1,26 @@
+# Rust
+target/
+**/*.rs.bk
+Cargo.lock.bak
+
+# Slint generated
+crates/fyp-ui/ui/generated/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# CI artifacts (when cargo is available)
+*.log
+
+# Local config
+.env
+.env.local
+
+# Crate-specific build outputs (kept under each crate's target/, see Cargo.toml comments)

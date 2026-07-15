@@ -1,0 +1,16 @@
+[package]
+name = "fyp-os"
+version = "0.1.0"
+edition = "2021"
+description = "OS abstraction layer for Find Your Port"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+ipnet = { version = "2.0", features = ["serde"] }
+ipnetwork = "0.18"
+windows = { version = "0.48", features = [
+    "Win32_Foundation",
+    "Win32_NetworkManagement_IpHelper",
+    "Win32_NetworkManagement_Ndis",
+    "Win32_Networking_WinSock",
+] }
