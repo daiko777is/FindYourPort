@@ -1,0 +1,63 @@
+// Toast notification component
+import { DesignTokens } from "../theme/tokens.slint";
+
+export component Toast inherits Rectangle {
+    in property <string> message;
+    in property <string> toast_type;
+
+    callback dismissed();
+
+    width: 300px;
+    height: 48px;
+    background: DesignTokens.bg_elevated;
+    border-radius: DesignTokens.radius_lg;
+    border-width: 1px;
+    border-color: root.toast_type == "success" ? DesignTokens.accent_green :
+                  root.toast_type == "error" ? DesignTokens.accent_red :
+                  root.toast_type == "warning" ? DesignTokens.accent_orange :
+                  DesignTokens.accent_blue;
+
+    states [
+        show when root.visible: {
+            x: 0;
+            opacity: 1;
+        }
+        hide when !root.visible: {
+            x: 50px;
+            opacity: 0;
+        }
+    ]
+
+    HorizontalLayout {
+        padding: DesignTokens.space_md;
+        spacing: DesignTokens.space_sm;
+        alignment: center;
+
+        Rectangle {
+            width: 20px; height: 20px;
+            background: root.toast_type == "success" ? DesignTokens.accent_green :
+                        root.toast_type == "error" ? DesignTokens.accent_red :
+                        root.toast_type == "warning" ? DesignTokens.accent_orange :
+                        DesignTokens.accent_blue;
+            border-radius: 10px;
+        }
+
+        Text {
+            text: root.message;
+            font-family: DesignTokens.font_ui;
+            font-size: 12px;
+            color: DesignTokens.text_primary;
+            horizontal-stretch: 1;
+        }
+
+        TouchArea {
+            width: 20px; height: 20px;
+            clicked => { root.dismissed(); }
+            Rectangle {
+                width: 12px; height: 12px;
+                background: DesignTokens.text_muted;
+                border-radius: 2px;
+            }
+        }
+    }
+}

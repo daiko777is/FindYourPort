@@ -1,0 +1,15 @@
+// Detail Row helper component
+import { DesignTokens } from "../theme/tokens.slint";
+
+export component DetailRow inherits Rectangle {
+    in property <string> label;
+    in property <string> value;
+    in property <color> value_color: DesignTokens.text_primary;
+
+    height: 20px;
+    HorizontalLayout {
+        spacing: DesignTokens.space_sm;
+        Text { text: root.label; font-size: 11px; color: DesignTokens.text_secondary; width: 60px; }
+        Text { text: root.value; font-family: DesignTokens.font_mono; font-size: 11px; color: root.value_color; horizontal-stretch: 1; }
+    }
+}

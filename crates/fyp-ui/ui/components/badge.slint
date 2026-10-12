@@ -1,0 +1,26 @@
+// Badge component for status indicators
+import { DesignTokens } from "../theme/tokens.slint";
+
+export component Badge inherits Rectangle {
+    in property <string> text;
+    in property <color> tint: DesignTokens.accent_blue;
+
+    height: 20px;
+    background: root.tint.transparentize(0.85);
+    border-radius: DesignTokens.radius_sm;
+
+    HorizontalLayout {
+        padding-left: 6px;
+        padding-right: 6px;
+
+        Text {
+            text: root.text;
+            color: root.tint;
+            font-size: 10px;
+            font-weight: 600;
+            font-family: DesignTokens.font_ui;
+            vertical-alignment: center;
+            horizontal-alignment: center;
+        }
+    }
+}

@@ -1,0 +1,33 @@
+// Shared data structures for the UI
+
+export struct ConnectionRowData {
+    protocol: string,
+    local_port: string,
+    local_addr: string,
+    remote_addr: string,
+    state: string,
+    state_color: color,
+    process_name: string,
+    process_initial: string,
+    process_icon: string,
+    pid: string,
+    is_suspicious: bool,
+    is_unsigned: bool,
+    process_path: string,
+    user: string,
+    duration_str: string,
+}
+
+export struct CompactRowData {
+    port: string,
+    process: string,
+    state: string,
+    state_color: color,
+    pid: string,
+}
+
+export struct ToastData {
+    message: string,
+    toast_type: string,
+    visible: bool,
+}

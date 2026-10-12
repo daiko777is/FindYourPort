@@ -1,0 +1,103 @@
+// Compact View / Widget component
+import { DesignTokens } from "../theme/tokens.slint";
+import { KillButton } from "../components/kill-button.slint";
+import { FypButton } from "../components/fyp-button.slint";
+import { CompactRowData } from "../types.slint";
+
+component CompactRow inherits Rectangle {
+    in property <string> port;
+    in property <string> process;
+    in property <string> state;
+    in property <color> state_color;
+    in property <string> pid;
+
+    callback kill_clicked();
+
+    height: 32px;
+    background: DesignTokens.bg_secondary;
+    border-radius: DesignTokens.radius_md;
+
+    HorizontalLayout {
+        padding-left: 6px;
+        padding-right: 12px;
+        spacing: 8px;
+
+        Rectangle {
+            width: 8px; height: 8px;
+            background: root.state_color;
+            border-radius: 4px;
+        }
+
+        Text { text: "Port " + root.port; font-family: DesignTokens.font_mono; font-size: 12px; font-weight: 700; color: DesignTokens.accent_blue; width: 80px; }
+
+        Text { text: root.process; font-size: 12px; color: DesignTokens.text_primary; horizontal-stretch: 1; }
+
+        KillButton {
+            clicked => { root.kill_clicked(); }
+        }
+    }
+}
+
+export component CompactView inherits Rectangle {
+    in property <[CompactRowData]> rows;
+    in property <bool> always_on_top: false;
+
+    callback row_kill(string);
+    callback open_full_window();
+    callback close_compact();
+
+    width: 280px;
+    preferred-height: 200px;
+    background: DesignTokens.bg_primary;
+    border-radius: DesignTokens.radius_lg;
+
+    VerticalLayout {
+        Rectangle {
+            height: 36px;
+            background: DesignTokens.bg_secondary;
+            border-radius: DesignTokens.radius_lg;
+
+            HorizontalLayout {
+                padding-left: 8px;
+                padding-right: 12px;
+                padding-top: 8px;
+                padding-bottom: 8px;
+                Text { text: "Find Your Port"; font-size: 12px; font-weight: 600; color: DesignTokens.accent_blue; }
+                Rectangle { horizontal-stretch: 1; }
+                FypButton {
+                    text: "Open Full";
+                    font_size: 10px;
+                    height: 24px;
+                    clicked => { root.open_full_window(); }
+                }
+                FypButton {
+                    text: "✕";
+                    width: 24px; height: 24px;
+                    font_size: 12px;
+                    danger: true;
+                    clicked => { root.close_compact(); }
+                }
+            }
+        }
+
+        VerticalLayout { spacing: 4px;
+            padding-left: 8px;
+            padding-right: 8px;
+            padding-top: 8px;
+            padding-bottom: 8px;
+            for row[i] in root.rows : CompactRow {
+                port: row.port;
+                process: row.process;
+                state: row.state;
+                state_color: row.state_color;
+                pid: row.pid;
+                kill_clicked => { root.row_kill(row.pid); }
+            }
+        }
+
+        Rectangle {
+            height: 8px;
+            background: DesignTokens.border_default;
+        }
+    }
+}

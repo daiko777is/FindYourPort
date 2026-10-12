@@ -1,0 +1,120 @@
+// Settings Modal
+import { DesignTokens } from "../theme/tokens.slint";
+import { FypButton } from "../components/fyp-button.slint";
+import { GroupBox, CheckBox, SpinBox } from "std-widgets.slint";
+
+export component SettingsModal inherits Rectangle {
+    in property <bool> dark_theme: true;
+    in property <bool> confirm_kill: true;
+    in property <bool> startup_in_tray: false;
+    in property <bool> security_mode: false;
+    in property <float> refresh_rate: 1.0;
+    in property <int> history_retention: 1000;
+
+    callback closed();
+    callback theme_changed(bool);
+    callback confirm_kill_changed(bool);
+    callback startup_in_tray_changed(bool);
+    callback security_mode_changed(bool);
+    callback refresh_rate_changed(float);
+    callback history_retention_changed(int);
+
+    width: 500px;
+    height: 450px;
+    background: DesignTokens.bg_elevated;
+    border-radius: DesignTokens.radius_lg;
+
+    VerticalLayout {
+        padding: DesignTokens.space_lg;
+        spacing: DesignTokens.space_lg;
+
+        Text { text: "Settings"; font-size: 16px; font-weight: 600; color: DesignTokens.text_primary; }
+
+        VerticalLayout { spacing: DesignTokens.space_md;
+            GroupBox {
+                title: "Appearance";
+                VerticalLayout { spacing: DesignTokens.space_sm;
+                    HorizontalLayout { spacing: DesignTokens.space_md;
+                        Text { text: "Theme"; font-size: 13px; color: DesignTokens.text_primary; width: 120px; }
+                        HorizontalLayout { spacing: 8px;
+                            FypButton {
+                                text: "Dark";
+                                horizontal-stretch: 1;
+                                height: 32px;
+                                primary: root.dark_theme;
+                                clicked => { root.theme_changed(true); }
+                            }
+                            FypButton {
+                                text: "Light";
+                                horizontal-stretch: 1;
+                                height: 32px;
+                                primary: !root.dark_theme;
+                                clicked => { root.theme_changed(false); }
+                            }
+                        }
+                    }
+                }
+            }
+
+            GroupBox {
+                title: "Behavior";
+                VerticalLayout { spacing: DesignTokens.space_sm;
+                    CheckBox {
+                        text: "Confirm before killing process";
+                        checked: root.confirm_kill;
+                        toggled => { root.confirm_kill_changed(self.checked); }
+                    }
+                    CheckBox {
+                        text: "Start minimized in system tray";
+                        checked: root.startup_in_tray;
+                        toggled => { root.startup_in_tray_changed(self.checked); }
+                    }
+                    CheckBox {
+                        text: "Enable Security Mode by default";
+                        checked: root.security_mode;
+                        toggled => { root.security_mode_changed(self.checked); }
+                    }
+                }
+            }
+
+            GroupBox {
+                title: "Performance";
+                VerticalLayout { spacing: DesignTokens.space_sm;
+                    HorizontalLayout { spacing: DesignTokens.space_md;
+                        Text { text: "Refresh Rate (Hz)"; font-size: 13px; color: DesignTokens.text_primary; width: 140px; }
+                        SpinBox {
+                            value: root.refresh_rate;
+                            minimum: 0.5;
+                            maximum: 5.0;
+                            width: 80px;
+                            height: 32px;
+                            edited(v) => { root.refresh_rate_changed(v); }
+                        }
+                        Text { text: "(0.5 - 5.0)"; font-size: 11px; color: DesignTokens.text_muted; }
+                    }
+                    HorizontalLayout { spacing: DesignTokens.space_md;
+                        Text { text: "History Retention"; font-size: 13px; color: DesignTokens.text_primary; width: 140px; }
+                        SpinBox {
+                            value: root.history_retention;
+                            minimum: 100;
+                            maximum: 10000;
+                            width: 80px;
+                            height: 32px;
+                            edited(v) => { root.history_retention_changed(v); }
+                        }
+                        Text { text: "entries"; font-size: 11px; color: DesignTokens.text_muted; }
+                    }
+                }
+            }
+        }
+
+        HorizontalLayout { alignment: end;
+            FypButton {
+                text: "Close";
+                width: 100px; height: 36px;
+                primary: true;
+                clicked => { root.closed(); }
+            }
+        }
+    }
+}

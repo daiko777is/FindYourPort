@@ -1,0 +1,12 @@
+// Dark Theme for Find Your Port
+import { DesignTokens } from "tokens.slint";
+
+export component DarkTheme inherits Window {
+    // This component provides the dark theme colors globally
+    // It's used by setting the theme property on the main window
+    
+    in property <bool> active: true;
+    
+    // Colors are applied via DesignTokens global
+    // This component exists to allow theme switching
+}

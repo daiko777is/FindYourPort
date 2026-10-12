@@ -1,0 +1,48 @@
+// Custom button component - Rectangle-based to allow full styling
+import { DesignTokens } from "../theme/tokens.slint";
+
+export component FypButton inherits Rectangle {
+    in property <string> text: "";
+    in property <bool> enabled: true;
+    in property <length> font_size: 13px;
+    in property <bool> primary: false;
+    in property <bool> danger: false;
+
+    callback clicked();
+
+    background: root.danger ? DesignTokens.accent_red :
+                root.primary ? DesignTokens.accent_blue :
+                DesignTokens.bg_tertiary;
+    border-radius: DesignTokens.radius_md;
+
+    Text {
+        text: root.text;
+        font-size: root.font_size;
+        font-weight: 600;
+        color: root.danger || root.primary ? #ffffff : DesignTokens.text_primary;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    states [
+        hover when touch_area.has_hover && root.enabled: {
+            background: root.danger ? DesignTokens.accent_red.darker(0.1) :
+                        root.primary ? DesignTokens.accent_blue.darker(0.1) :
+                        DesignTokens.bg_secondary;
+        }
+        down when touch_area.pressed && root.enabled: {
+            background: root.danger ? DesignTokens.accent_red.darker(0.2) :
+                        root.primary ? DesignTokens.accent_blue.darker(0.2) :
+                        DesignTokens.bg_primary;
+        }
+        disabled when !root.enabled: {
+            background: DesignTokens.bg_tertiary;
+            opacity: 0.5;
+        }
+    ]
+
+    touch_area := TouchArea {
+        enabled: root.enabled;
+        clicked => { root.clicked(); }
+    }
+}

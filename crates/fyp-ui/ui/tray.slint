@@ -1,0 +1,37 @@
+// System tray component for Find Your Port.
+// Must be a top-level component (inherits SystemTrayIcon), not nested in a Window.
+export component Tray inherits SystemTrayIcon {
+    callback activated_open();
+    callback activated_refresh();
+    callback activated_quit();
+
+    icon: @image-url("assets/tray-icon.png");
+    tooltip: "Find Your Port — click to show, right-click for menu";
+    title: "Find Your Port";
+
+    clicked => {
+        activated_open();
+    }
+
+    Menu {
+        MenuItem {
+            title: "Open Find Your Port";
+            activated => {
+                root.activated_open();
+            }
+        }
+        MenuItem {
+            title: "Refresh connections";
+            activated => {
+                root.activated_refresh();
+            }
+        }
+        MenuSeparator { }
+        MenuItem {
+            title: "Quit";
+            activated => {
+                root.activated_quit();
+            }
+        }
+    }
+}

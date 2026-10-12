@@ -6,7 +6,7 @@ description = "Slint UI for Find Your Port"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-slint = "1.5"
+slint = { version = "1.5", features = ["system-tray"] }
 fyp-core = { path = "../fyp-core" }
 fyp-os = { path = "../fyp-os" }
 

@@ -1,107 +1,40 @@
 # Project State: Find Your Port
 
-## Current Phase: Phase 2 - Core Implementation (In Progress)
+## Current Phase: UI wiring & polish (In Progress)
 
-### ✅ Completed Tasks (Phase 1 - Basic Implementation):
-- [x] Rust toolchain installed and verified (`rustc 1.96.1`, `cargo 1.96.1`)
-- [x] Project structure created with 4 crates: `fyp-core`, `fyp-os`, `fyp-ui`, `fyp-cli`
-- [x] Fixed compilation errors:
-    - Created missing `settings_manager.rs` module
-    - Added `chrono = "0.4"` dependency where needed
-    - Fixed unused imports and variables:
-      - Removed unused `SocketAddr` in `search_engine.rs`
-      - Removed unused `ScanResult` in `history_logger.rs`
-      - Changed `let mut file = ...` to `let file = ...` where appropriate
-      - Used `_timeout` for unused variable in `scan_port`
-- [x] Project compiles successfully in both debug and release modes (no errors, only warnings)
-- [x] Created documentation files:
-    - `README.md`: Project overview
-    - `KNOWLEDGE_BASE.md`: Traceability matrix (PRD/TRD → code)
-    - `CHANGELOG.md`: Template for changes
-    - `LICENSE`: MIT/Apache-2.0 dual license
+Find Your Port = desktop monitor of active TCP/UDP connections (who owns a port),
+with one-click process termination, security alerts for risky ports, and a compact
+widget view. Built with Rust + Slint (1.17), cross-platform (Windows/Linux).
 
-### 📝 Known Issues (Warnings - Non-blocking):
-- Workspace resolver version mismatch (warning only)
-- Unused `workspace.profile` in root Cargo.toml (warning only)
-- Private type `AppStateInner` used in public methods (addressed with `#[allow(...)]`)
-- Unused mutable variable in `history_logger.rs` (fixed)
-- Dead code warnings in `app_state.rs` (addressed with `#[allow(dead_code)]`)
+## ✅ Completed
 
-### 🎯 Current Phase: Phase 2 - Core Implementation
-Focus on implementing the core functionality in each crate:
+- Cargo workspace: `fyp-core`, `fyp-os`, `fyp-ui`, `fyp-cli` (builds clean, `clippy` clean, tests pass).
+- `fyp-os` adapter trait `NetworkAdapter` + `Connection` model; `system_adapter()` factory.
+  - Windows adapter: real network connections via IP Helper API, `ScanResult`/`MibState` mapping, `GetFileVersionInfo` for signing, `pid`/`user`/`duration` capture, `kill_process`.
+  - Linux adapter: `/proc/net/{tcp,tcp6,udp,udp6}` parsing, process/user resolution, `kill_process`, tests.
+- `fyp-core`: `AppState`, `SearchEngine`, `HistoryLogger`, `SettingsManager` (+ `SecurityAnalyzer`).
+- `fyp-ui` (Slint):
+  - `theme/design-tokens.slint` (dark/light), shared `types.slint` (`ConnectionRowData`, `CompactRowData`, `ToastData`).
+  - Components: `header`, `footer`, `badge`, `toast`, `search-bar`, `connection-table`, `connection-row`, `detail-panel`, `kill-button`, `fyp-button`, `modals/{confirm-kill,settings}`, `views/compact-view`.
+  - `app-window.slint`: connections table, search filter, confirm-kill modal, settings modal, detail panel, compact view, toasts, keyboard shortcuts (Ctrl+F/R/K/,/M/S, Esc).
+- `main.rs` wiring: initial scan + `on_refresh_connections`; search filter over snapshot; security toggle counts alerts (unsigned / risky ports); kill flow (confirm → `kill_process` → toast → refresh); detail panel open-path (Explorer/xdg-open); toasts auto-dismiss after 4s; all shortcuts.
+- System tray (`ui/tray.slint`, Slint builtin `SystemTrayIcon` via `system-tray` feature): icon in notification area, left-click / "Open" menu → show window, "Refresh connections" → re-scan, "Quit" → exit loop. Default `HideWindow` close behavior + visible tray keeps the event loop alive (close-to-tray).
+- App launches (`cargo run -p fyp-ui` → window stays alive, no panic).
+- UI cleanup pass (per user screenshot review): removed fake window buttons (─ □ ✕) from the header, removed placeholder Copy Path / Copy Cmd buttons and empty Started/CPU/RAM rows from the detail panel, removed dead Settings tabs (General/Shortcuts/About) and the inert "System" theme button, added a real `process_initial` tile (first letter) for process icons, and restructured `app-window.slint` into layered overlays (main layer, compact view, toasts overlay bottom-right, modals).
 
-#### 1. fyp-core (Core Logic)
-- [ ] Implement `AppState` with actual application state management
-- [ ] Implement `SearchEngine`:
-    - Port scanning logic (TCP connect, service detection)
-    - Filtering and result processing
-    - Integration with `fyp-os` adapters
-- [ ] Implement `HistoryLogger`:
-    - Persistent logging of scans and events
-    - Query and retrieval of historical data
-- [ ] Implement `SettingsManager`:
-    - User configuration persistence
-    - Default values and validation
+## 🎯 Next steps (todo, priority order)
 
-#### 2. fyp-os (OS Abstraction)
-- [ ] Implement Windows adapter:
-    - Use `iphlpapi` (`GetAdaptersAddresses`, `GetTcpTable2`)
-    - Parse network interfaces and connections
-    - Service name resolution (via `getservbyport` or local mapping)
-- [ ] Implement Linux adapter:
-    - Read `/proc/net/tcp`, `/proc/net/tcp6`
-    - Use `ss` or `netstat` command parsing as fallback
-    - Parse `/etc/services` for service names
-- [ ] Provide unified interface:
-    - `list_interfaces()`
-    - `get_local_ip()`
-    - `is_port_open(host, port)`
-    - `get_service_name(port, protocol)`
+1. Process icons in table rows (`process_icon` field is already plumbed, empty).
+2. Security Mode polish: real alert list view for suspicious connections.
+3. Elevation: relaunch as administrator (UAC) / pkexec when killing system processes is denied.
+4. Compact mode UX polish (mini floating window).
+5. Performance: async background refresh (< 100 ms for 10k connections).
+6. Installers: Windows (exe/msi), Linux (deb/rpm/AppImage).
+7. Docs: update README/CONTRIBUTING/CHANGELOG to match shipped scope; license audit.
 
-#### 3. fyp-ui (Slint Interface)
-- [ ] Design main window in `app_window.slint`:
-    - Input for target host/IP
-    - Port range specification (single, range, comma-separated)
-    - Scan type selection (TCP/UDP, common ports)
-    - Start/Stop/Pause controls
-    - Results table with columns: IP, Port, Protocol, Service, Status
-    - History and settings buttons
-- [ ] Implement components:
-    - `search_bar.slint`: Input controls and validation
-    - Result table component with sorting/filtering
-- [ ] Connect UI to core:
-    - Send scan requests to `fyp-core`
-    - Display results in real-time
-    - Handle user interactions (double-click to copy, etc.)
+## 📝 Known issues
 
-#### 4. fyp-cli (Command Line Interface)
-- [ ] Implement command structure using `clap`:
-    - `fyp-cli scan [OPTIONS] <TARGET>`
-    - `fyp-cli history [SUBCOMMAND]`
-    - `fyp-cli config [SUBCOMMAND]`
-- [ ] Implement subcommands:
-    - `scan`: 
-        - `--ports` (e.g., `80,443,1000-2000`)
-        - `--timeout` (seconds)
-        - `--rate-limit` (packets/sec)
-        - `--output` (format: json, csv, txt)
-    - `history`:
-        - `list`: Show past scans
-        - `show <id>`: Details of a specific scan
-        - `clear`: Delete history
-    - `config`:
-        - `get`: Show current settings
-        - `set`: Modify settings
-        - `reset`: Reset to defaults
-
-### 🔄 Development Approach
-Follow the ReAct + Evaluator-Optimizer + Human-in-the-Loop cycle:
-1. **Reason**: Analyze requirements and current state
-2. **Act**: Implement small, testable increments
-3. **Evaluate**: Check correctness, performance, and adherence to design
-4. **Optimize**: Refactor and improve based on evaluation
-5. **Human-in-the-Loop**: Regular check-ins for feedback and direction
-
-### 📈 Progress Tracking
-Update this file after each significant milestone.
-Last updated: $(date +%Y-%m-%d\ %H:%M:%S)
+- Process icon tile shows first letter (`process_initial`); real executable icon extraction still pending.
+- `on_shortcut_search` shows a toast instead of focusing the search field.
+- Search filter uses `to_lowercase()` on SharedString (works via `as_str()`; check no clone cost hotspot at scale).
+- Tray: on Linux requires a StatusNotifierItem host (most DEs); left-click behavior varies by desktop. Auto-refresh timer in the tray ("Refresh" is manual only).

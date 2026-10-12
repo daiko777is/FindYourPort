@@ -1,0 +1,132 @@
+// Detail Panel component - slide-in from right
+import { DesignTokens } from "../theme/tokens.slint";
+import { KillButton } from "kill-button.slint";
+import { DetailRow } from "detail-row.slint";
+import { FypButton } from "fyp-button.slint";
+
+export component DetailPanel inherits Rectangle {
+    in property <string> process_name;
+    in property <string> process_initial;
+    in property <string> process_icon;
+    in property <string> pid;
+    in property <string> path;
+    in property <string> user;
+    in property <string> protocol;
+    in property <string> local_addr;
+    in property <string> remote_addr;
+    in property <string> conn_state;
+    in property <string> duration;
+    in property <string> signed_status;
+    in property <bool> is_signed: true;
+
+    callback kill_process();
+    callback open_path();
+    callback close_panel();
+
+    width: 320px;
+    background: DesignTokens.bg_secondary;
+    border-width: 1px;
+    border-color: DesignTokens.border_default;
+
+    VerticalLayout {
+        padding: DesignTokens.space_md;
+        spacing: DesignTokens.space_sm;
+
+        HorizontalLayout {
+            spacing: DesignTokens.space_sm;
+            
+            Rectangle {
+                width: 32px;
+                height: 32px;
+                background: DesignTokens.accent_blue.transparentize(0.7);
+                border-radius: 4px;
+
+                Text {
+                    text: root.process_initial;
+                    font-size: 13px;
+                    font-weight: 700;
+                    color: DesignTokens.accent_blue;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+            
+            VerticalLayout {
+                spacing: 2px;
+                Text {
+                    text: root.process_name;
+                    font-family: DesignTokens.font_ui;
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: DesignTokens.text_primary;
+                }
+                Text {
+                    text: "PID: " + root.pid;
+                    font-family: DesignTokens.font_mono;
+                    font-size: 11px;
+                    color: DesignTokens.text_secondary;
+                }
+            }
+            
+            Rectangle { horizontal-stretch: 1; }
+            
+            FypButton {
+                text: "✕";
+                font_size: 14px;
+                width: 28px;
+                height: 28px;
+                clicked => { root.close_panel(); }
+            }
+        }
+
+        Rectangle { height: 1px; background: DesignTokens.border_default; }
+
+        Text { text: "Process Info"; font-size: 11px; font-weight: 600; color: DesignTokens.text_secondary; }
+        
+        VerticalLayout { spacing: 6px;
+            DetailRow { label: "PID"; value: root.pid; }
+            DetailRow { label: "User"; value: root.user; }
+        }
+
+        Rectangle { height: 1px; background: DesignTokens.border_default; }
+
+        Text { text: "Network"; font-size: 11px; font-weight: 600; color: DesignTokens.text_secondary; }
+        
+        VerticalLayout { spacing: 6px;
+            DetailRow { label: "Protocol"; value: root.protocol; }
+            DetailRow { label: "Local"; value: root.local_addr; }
+            DetailRow { label: "Remote"; value: root.remote_addr; }
+            DetailRow { label: "State"; value: root.conn_state; }
+            DetailRow { label: "Duration"; value: root.duration; }
+        }
+
+        Rectangle { height: 1px; background: DesignTokens.border_default; }
+
+        Text { text: "Security"; font-size: 11px; font-weight: 600; color: DesignTokens.text_secondary; }
+        
+        VerticalLayout { spacing: 6px;
+            DetailRow { 
+                label: "Signed"; 
+                value: root.signed_status; 
+                value_color: root.is_signed ? DesignTokens.accent_green : DesignTokens.accent_red;
+            }
+        }
+
+        Rectangle { height: 1px; background: DesignTokens.border_default; }
+
+        VerticalLayout { spacing: DesignTokens.space_sm;
+            FypButton {
+                text: "Kill Process";
+                danger: true;
+                height: 36px;
+                clicked => { root.kill_process(); }
+            }
+            
+            FypButton {
+                text: "Open Path";
+                height: 32px;
+                clicked => { root.open_path(); }
+            }
+        }
+    }
+}

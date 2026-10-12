@@ -1,0 +1,63 @@
+// Header component - search bar, refresh, security toggle, settings
+import { DesignTokens } from "../theme/tokens.slint";
+import { SearchBar } from "search-bar.slint";
+import { FypButton } from "fyp-button.slint";
+
+export component Header inherits Rectangle {
+    in-out property <string> search_text;
+    in property <bool> security_mode: false;
+    in property <int> alert_count: 0;
+    in property <bool> scanning: false;
+
+    callback search_changed(string);
+    callback refresh_clicked();
+    callback security_toggled(bool);
+    callback settings_clicked();
+    callback search_activated();
+    callback search_deactivated();
+
+    height: 48px;
+    background: DesignTokens.bg_secondary;
+    border-width: 1px;
+    border-color: DesignTokens.border_default;
+
+    HorizontalLayout {
+        padding-left: DesignTokens.space_md;
+        padding-right: DesignTokens.space_md;
+        spacing: DesignTokens.space_md;
+
+        SearchBar {
+            text <=> root.search_text;
+            horizontal-stretch: 1;
+            text_changed(query) => { root.search_changed(query); }
+            search_activated => { root.search_activated(); }
+            search_deactivated => { root.search_deactivated(); }
+        }
+
+        FypButton {
+            text: root.scanning ? "⟳" : "↻";
+            enabled: !root.scanning;
+            font_size: 16px;
+            width: 36px;
+            height: 36px;
+            clicked => { root.refresh_clicked(); }
+        }
+
+        FypButton {
+            text: "🛡️";
+            font_size: 16px;
+            width: 36px;
+            height: 36px;
+            background: root.security_mode ? DesignTokens.accent_orange.transparentize(0.8) : DesignTokens.bg_tertiary;
+            clicked => { root.security_toggled(!root.security_mode); }
+        }
+
+        FypButton {
+            text: "⚙️";
+            font_size: 16px;
+            width: 36px;
+            height: 36px;
+            clicked => { root.settings_clicked(); }
+        }
+    }
+}

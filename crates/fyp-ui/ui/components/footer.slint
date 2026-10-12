@@ -1,0 +1,43 @@
+// Footer component - status indicator, connection count, last refresh time
+import { DesignTokens } from "../theme/tokens.slint";
+
+export component Footer inherits Rectangle {
+    in property <string> status_text;
+    in property <int> connection_count: 0;
+    in property <string> last_refresh;
+    in property <bool> elevated: false;
+
+    height: 28px;
+    background: DesignTokens.bg_secondary;
+    border-width: 1px;
+    border-color: DesignTokens.border_default;
+
+    HorizontalLayout {
+        padding-left: DesignTokens.space_md;
+        padding-right: DesignTokens.space_md;
+        spacing: DesignTokens.space_md;
+
+        HorizontalLayout { spacing: 6px;
+            Rectangle {
+                width: 8px; height: 8px;
+                background: root.elevated ? DesignTokens.accent_orange : DesignTokens.accent_green;
+                border-radius: 4px;
+            }
+            Text { text: root.status_text; font-size: 11px; color: DesignTokens.text_secondary; }
+        }
+
+        Rectangle { horizontal-stretch: 1; }
+
+        Text { 
+            text: "{root.connection_count} connections"; 
+            font-size: 11px; 
+            color: DesignTokens.text_secondary; 
+        }
+
+        Text { 
+            text: "Updated: " + root.last_refresh; 
+            font-size: 11px; 
+            color: DesignTokens.text_muted; 
+        }
+    }
+}

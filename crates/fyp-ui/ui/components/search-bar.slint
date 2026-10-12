@@ -1,0 +1,48 @@
+// Search Bar component - global, omnipresent search
+import { DesignTokens } from "../theme/tokens.slint";
+
+export component SearchBar inherits Rectangle {
+    in-out property <string> text;
+    callback text_changed(string);
+    callback search_activated();
+    callback search_deactivated();
+
+    height: 36px;
+    background: DesignTokens.bg_tertiary;
+    border-radius: DesignTokens.radius_md;
+
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 8px;
+        alignment: start;
+
+        Rectangle {
+            width: 16px;
+            height: 16px;
+            background: DesignTokens.text_muted;
+        }
+
+        TextInput {
+            text <=> root.text;
+            color: DesignTokens.text_primary;
+            font-family: DesignTokens.font_ui;
+            font-size: 13px;
+            edited => { root.text_changed(root.text); }
+        }
+
+        Rectangle {
+            width: 16px;
+            height: 16px;
+            background: DesignTokens.text_muted;
+            visible: root.text != "";
+            TouchArea {
+                clicked => { root.text = ""; root.text_changed(""); }
+            }
+        }
+    }
+
+    TouchArea {
+        clicked => { }
+    }
+}

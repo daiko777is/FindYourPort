@@ -106,7 +106,7 @@ impl HistoryLogger {
     /// Clear the log file and in-memory entries.
     pub fn clear(&self) -> io::Result<()> {
         // Truncate the file.
-        let mut file = OpenOptions::new()
+        let file = OpenOptions::new()
             .write(true)
             .truncate(true)
             .open(&self.log_path)?;

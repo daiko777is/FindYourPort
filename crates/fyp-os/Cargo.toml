@@ -6,11 +6,17 @@ description = "OS abstraction layer for Find Your Port"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-ipnet = { version = "2.0", features = ["serde"] }
-ipnetwork = "0.18"
+
+[target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.48", features = [
     "Win32_Foundation",
     "Win32_NetworkManagement_IpHelper",
     "Win32_NetworkManagement_Ndis",
     "Win32_Networking_WinSock",
+    "Win32_Security",
+    "Win32_System_ProcessStatus",
+    "Win32_System_Threading",
 ] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = "0.2"

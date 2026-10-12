@@ -1,0 +1,107 @@
+// Connection Table Row component
+import { DesignTokens } from "../theme/tokens.slint";
+import { Badge } from "badge.slint";
+import { KillButton } from "kill-button.slint";
+
+export component ConnectionRow inherits Rectangle {
+    in property <string> protocol;
+    in property <string> local_port;
+    in property <string> remote_addr;
+    in property <string> state;
+    in property <color> state_color;
+    in property <string> process_name;
+    in property <string> process_initial;
+    in property <string> process_icon;
+    in property <string> pid;
+    in property <bool> is_suspicious: false;
+    in property <bool> is_unsigned: false;
+
+    callback kill_clicked(string);
+    callback row_clicked();
+
+    height: 40px;
+    background: root.is_suspicious ? DesignTokens.bg_secondary : DesignTokens.bg_primary;
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 16px;
+
+        Badge {
+            text: root.protocol;
+            tint: root.protocol == "TCP" ? DesignTokens.accent_blue : DesignTokens.accent_purple;
+        }
+
+        Text {
+            text: root.local_port;
+            font-family: DesignTokens.font_mono;
+            font-weight: 700;
+            color: DesignTokens.text_primary;
+            width: 80px;
+        }
+
+        Text {
+            text: root.remote_addr;
+            font-family: DesignTokens.font_mono;
+            color: DesignTokens.text_secondary;
+            width: 140px;
+        }
+
+        Badge {
+            text: root.state;
+            tint: root.state_color;
+        }
+
+        HorizontalLayout {
+            spacing: 8px;
+            
+            Rectangle {
+                width: 16px;
+                height: 16px;
+                background: DesignTokens.accent_blue.transparentize(0.7);
+                border-radius: 2px;
+
+                Text {
+                    text: root.process_initial;
+                    font-size: 9px;
+                    font-weight: 700;
+                    color: DesignTokens.accent_blue;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+            
+            Text {
+                text: root.process_name;
+                color: DesignTokens.text_primary;
+                font-family: DesignTokens.font_ui;
+                font-size: 13px;
+            }
+            
+            Badge {
+                text: "UNSIGNED";
+                tint: DesignTokens.accent_orange;
+                visible: root.is_unsigned;
+            }
+        }
+
+        Text {
+            text: root.pid;
+            font-family: DesignTokens.font_mono;
+            color: DesignTokens.text_secondary;
+            width: 60px;
+        }
+
+        KillButton {
+            clicked => { root.kill_clicked(root.pid); }
+        }
+    }
+
+    states [
+        hover when touch_area.has_hover: {
+            background: DesignTokens.bg_tertiary;
+        }
+    ]
+
+    touch_area := TouchArea { clicked => { root.row_clicked(); } }
+}

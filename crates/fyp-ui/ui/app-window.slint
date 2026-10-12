@@ -1,336 +1,206 @@
-import { Button, SpinBox, HorizontalBox, VerticalBox, GroupBox } from "std-widgets.slint";
+// Main Application Window
+import { DesignTokens } from "theme/tokens.slint";
+import { Header } from "components/header.slint";
+import { ConnectionTable } from "components/connection-table.slint";
+import { DetailPanel } from "components/detail-panel.slint";
+import { Footer } from "components/footer.slint";
+import { Toast } from "components/toast.slint";
+import { ConfirmKillModal } from "modals/confirm-kill.slint";
+import { SettingsModal } from "modals/settings.slint";
+import { CompactView } from "views/compact-view.slint";
+import { ConnectionRowData, CompactRowData, ToastData } from "types.slint";
+import { Tray } from "tray.slint";
 
-// ── Colors ──
-global Colors {
-    out property <color> background: #1a1b26;
-    out property <color> surface: #24283b;
-    out property <color> border: #3d4660;
-    out property <color> accent: #7aa2f7;
-    out property <color> accent-hover: #89b0ff;
-    out property <color> text-primary: #c0caf5;
-    out property <color> text-secondary: #565f89;
-    out property <color> text-muted: #414868;
-    out property <color> open: #9ece6a;
-}
+export { Tray }
 
-// ── Data Models ──
-struct InterfaceItem {
-    name: string,
-    ips: string,
-}
-
-struct PortResult {
-    port: string,
-    service: string,
-    status: string,
-}
-
-// ── Main Window ──
 export component AppWindow inherits Window {
     title: "Find Your Port";
-    min-width: 700px;
-    min-height: 500px;
-    preferred-width: 900px;
-    preferred-height: 600px;
-    background: Colors.background;
+    min-width: 720px;
+    min-height: 480px;
+    preferred-width: 960px;
+    preferred-height: 640px;
+    background: DesignTokens.bg_primary;
 
-    in property <[InterfaceItem]> interfaces;
-    in property <[PortResult]> scan-results;
-    in property <string> local-ip: "Detectando...";
-    in property <string> status-text: "Listo";
+    // Data binding
+    in-out property <[ConnectionRowData]> connections: [];
+    in-out property <[ConnectionRowData]> filtered_connections: [];
+    in-out property <[CompactRowData]> compact_rows: [];
+    in-out property <string> search_query;
+    in property <bool> security_mode: false;
+    in property <int> alert_count: 0;
     in property <bool> scanning: false;
-    in property <int> open-count: 0;
-    in-out property <int> scan-start: 1;
-    in-out property <int> scan-end: 1024;
-    in-out property <int> scan-timeout: 200;
+    in property <string> status_text: "Ready";
+    in property <int> connection_count: 0;
+    in property <string> last_refresh: "Never";
 
-    callback refresh-interfaces();
-    callback scan-ports(int, int, int);
+    // UI state
+    in-out property <bool> detail_panel_open: false;
+    in-out property <bool> compact_mode_open: false;
+    in-out property <bool> settings_open: false;
+    in-out property <bool> confirm_kill_open: false;
+    in-out property <string> kill_target_pid: "";
+    in-out property <string> kill_target_port: "";
+    in-out property <string> kill_target_protocol: "";
+    in-out property <string> kill_target_name: "";
 
-    HorizontalBox {
-        // ── Left Sidebar ──
-        VerticalBox {
-            width: 280px;
-            spacing: 12px;
-            padding: 16px;
+    in-out property <ConnectionRowData> selected_connection: {
+        protocol: "", local_port: "", local_addr: "", remote_addr: "", state: "",
+        state_color: DesignTokens.accent_blue, process_name: "—", process_initial: "?",
+        process_icon: "",
+        pid: "—", is_suspicious: false, is_unsigned: false,
+        process_path: "—", user: "—", duration_str: "—"
+    };
 
-            Text {
-                text: "Find Your Port";
-                font-size: 18px;
-                font-weight: 800;
-                color: Colors.accent;
-                horizontal-alignment: center;
-            }
+    // Toasts
+    in-out property <[ToastData]> toasts: [];
 
-            // Local IP card
-            Rectangle {
-                height: 70px;
-                background: Colors.surface;
-                border-width: 1px;
-                border-color: Colors.border;
-                border-radius: 8px;
+    // Callbacks
+    callback refresh_connections();
+    callback search_changed(string);
+    callback security_toggled(bool);
+    callback settings_opened();
+    callback row_selected(string);
+    callback kill_requested(string);
+    callback kill_confirmed(string);
+    callback kill_cancelled();
+    callback compact_mode_toggled(bool);
+    callback toast_dismissed(int);
+    callback open_path();
 
-                VerticalBox {
-                    padding: 10px;
-                    spacing: 4px;
+    // Keyboard shortcuts
+    callback shortcut_search();
+    callback shortcut_kill();
+    callback shortcut_refresh();
+    callback shortcut_settings();
+    callback shortcut_compact();
+    callback shortcut_security();
+    callback shortcut_escape();
 
-                    Text {
-                        text: "IP Local";
-                        font-size: 11px;
-                        color: Colors.text-secondary;
-                    }
-                    Text {
-                        text: root.local-ip;
-                        font-size: 15px;
-                        font-weight: 700;
-                        color: Colors.accent;
-                    }
-                }
-            }
-
-            // Interfaces section
-            GroupBox {
-                title: "Interfaces de Red";
-                VerticalBox {
-                    spacing: 4px;
-
-                    for iface[i] in root.interfaces : Rectangle {
-                        height: 48px;
-                        background: Colors.surface;
-                        border-radius: 4px;
-
-                        HorizontalBox {
-                            padding: 8px;
-                            spacing: 6px;
-
-                            Rectangle {
-                                width: 8px;
-                                height: 8px;
-                                border-radius: 4px;
-                                background: Colors.accent;
-                                y: parent.height / 2 - 4px;
-                            }
-
-                            VerticalBox {
-                                spacing: 2px;
-                                padding: 0px;
-                                padding-left: 4px;
-
-                                Text {
-                                    text: iface.name;
-                                    font-size: 12px;
-                                    font-weight: 700;
-                                    color: Colors.text-primary;
-                                    overflow: elide;
-                                }
-                                Text {
-                                    text: iface.ips;
-                                    font-size: 10px;
-                                    color: Colors.text-secondary;
-                                    overflow: elide;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            Button {
-                text: "Refrescar Interfaces";
-                clicked => { root.refresh-interfaces(); }
-            }
+    FocusScope {
+        key-pressed(event) => {
+            if (event.modifiers.control && event.text == "f") { root.shortcut_search(); return accept; }
+            if (event.modifiers.control && event.text == "r") { root.shortcut_refresh(); return accept; }
+            if (event.modifiers.control && event.text == "k") { root.shortcut_kill(); return accept; }
+            if (event.modifiers.control && event.text == ",") { root.shortcut_settings(); return accept; }
+            if (event.modifiers.control && event.text == "m") { root.shortcut_compact(); return accept; }
+            if (event.modifiers.control && event.text == "s") { root.shortcut_security(); return accept; }
+            if (event.text == "Escape") { root.shortcut_escape(); return accept; }
+            reject
         }
+    }
 
-        // ── Right Panel ──
-        VerticalBox {
-            spacing: 12px;
-            padding: 16px;
+    // Main content layer (fills the window)
+    Rectangle {
+        background: DesignTokens.bg_primary;
 
-            // Scan controls
-            Rectangle {
-                height: 130px;
-                background: Colors.surface;
-                border-width: 1px;
-                border-color: Colors.border;
-                border-radius: 8px;
-
-                VerticalBox {
-                    padding: 14px;
-                    spacing: 10px;
-
-                    Text {
-                        text: "Escaneo de Puertos";
-                        font-size: 13px;
-                        font-weight: 700;
-                        color: Colors.text-primary;
-                    }
-
-                    HorizontalBox {
-                        spacing: 12px;
-
-                        Text {
-                            text: "Desde:";
-                            font-size: 12px;
-                            vertical-alignment: center;
-                            color: Colors.text-secondary;
-                        }
-                        SpinBox {
-                            width: 90px;
-                            minimum: 1;
-                            maximum: 65535;
-                            value: root.scan-start;
-                            edited(v) => { root.scan-start = v; }
-                        }
-
-                        Text {
-                            text: "Hasta:";
-                            font-size: 12px;
-                            vertical-alignment: center;
-                            color: Colors.text-secondary;
-                        }
-                        SpinBox {
-                            width: 90px;
-                            minimum: 1;
-                            maximum: 65535;
-                            value: root.scan-end;
-                            edited(v) => { root.scan-end = v; }
-                        }
-                    }
-
-                    HorizontalBox {
-                        spacing: 12px;
-
-                        Text {
-                            text: "Timeout (ms):";
-                            font-size: 12px;
-                            vertical-alignment: center;
-                            color: Colors.text-secondary;
-                        }
-                        SpinBox {
-                            width: 90px;
-                            minimum: 10;
-                            maximum: 5000;
-                            value: root.scan-timeout;
-                            edited(v) => { root.scan-timeout = v; }
-                        }
-
-                        Rectangle { horizontal-stretch: 1; }
-
-                        Button {
-                            text: root.scanning ? "Escaneando..." : "Escanear";
-                            enabled: !root.scanning;
-                            clicked => {
-                                root.scan-ports(root.scan-start, root.scan-end, root.scan-timeout);
-                            }
-                        }
-                    }
-                }
+        VerticalLayout {
+            Header {
+                search_text <=> root.search_query;
+                security_mode: root.security_mode;
+                alert_count: root.alert_count;
+                scanning: root.scanning;
+                search_changed(query) => { root.search_changed(query); }
+                refresh_clicked => { root.refresh_connections(); }
+                security_toggled(enabled) => { root.security_toggled(enabled); }
+                settings_clicked => { root.settings_opened(); }
             }
 
-            // Results table header
-            Rectangle {
-                height: 32px;
-                background: Colors.surface;
-                border-width: 1px;
-                border-color: Colors.border;
-                border-radius: 6px;
-
-                HorizontalBox {
-                    padding: 8px;
-                    spacing: 0px;
-
-                    Text {
-                        text: "Puerto";
-                        font-size: 11px;
-                        font-weight: 700;
-                        color: Colors.text-secondary;
-                        width: 100px;
-                    }
-                    Text {
-                        text: "Servicio";
-                        font-size: 11px;
-                        font-weight: 700;
-                        color: Colors.text-secondary;
-                        width: 160px;
-                    }
-                    Text {
-                        text: "Estado";
-                        font-size: 11px;
-                        font-weight: 700;
-                        color: Colors.text-secondary;
-                        horizontal-stretch: 1;
-                    }
-                }
-            }
-
-            // Results list
-            VerticalBox {
+            HorizontalLayout {
                 horizontal-stretch: 1;
                 vertical-stretch: 1;
-                spacing: 2px;
 
-                for result[i] in root.scan-results : Rectangle {
-                    height: 36px;
-                    background: Colors.surface;
-                    border-radius: 4px;
+                ConnectionTable {
+                    rows: root.filtered_connections;
+                    horizontal-stretch: 1;
+                    vertical-stretch: 1;
+                    row_selected(pid) => { root.row_selected(pid); }
+                    kill_requested(pid) => { root.kill_requested(pid); }
+                }
 
-                    HorizontalBox {
-                        padding: 10px;
-                        spacing: 0px;
-
-                        Text {
-                            text: result.port;
-                            font-size: 13px;
-                            font-weight: 700;
-                            color: Colors.accent-hover;
-                            width: 100px;
-                        }
-                        Text {
-                            text: result.service;
-                            font-size: 12px;
-                            color: Colors.text-primary;
-                            width: 160px;
-                        }
-                        Text {
-                            text: result.status;
-                            font-size: 12px;
-                            font-weight: 700;
-                            color: Colors.open;
-                            horizontal-stretch: 1;
-                        }
-                    }
+                DetailPanel {
+                    visible: root.detail_panel_open;
+                    width: 320px;
+                    process_name: root.selected_connection.process_name;
+                    process_initial: root.selected_connection.process_initial;
+                    pid: root.selected_connection.pid;
+                    path: root.selected_connection.process_path;
+                    user: root.selected_connection.user;
+                    protocol: root.selected_connection.protocol;
+                    local_addr: root.selected_connection.local_addr;
+                    remote_addr: root.selected_connection.remote_addr;
+                    conn_state: root.selected_connection.state;
+                    duration: root.selected_connection.duration_str;
+                    signed_status: root.selected_connection.is_unsigned ? "Unsigned / not verified" : "Signed";
+                    is_signed: !root.selected_connection.is_unsigned;
+                    kill_process => { root.kill_requested(root.selected_connection.pid); }
+                    open_path => { root.open_path(); }
+                    close_panel => { root.detail_panel_open = false; }
                 }
             }
 
-            // Status bar
-            Rectangle {
-                height: 36px;
-                background: Colors.surface;
-                border-width: 1px;
-                border-color: Colors.border;
-                border-radius: 6px;
-
-                HorizontalBox {
-                    padding: 10px;
-                    spacing: 12px;
-
-                    Text {
-                        text: root.status-text;
-                        font-size: 11px;
-                        color: Colors.text-secondary;
-                        horizontal-stretch: 1;
-                        vertical-alignment: center;
-                    }
-
-                    Text {
-                        text: "Puertos abiertos: " + root.open-count;
-                        font-size: 12px;
-                        font-weight: 700;
-                        color: root.open-count > 0 ? Colors.open : Colors.text-muted;
-                        vertical-alignment: center;
-                    }
-                }
+            Footer {
+                status_text: root.status_text;
+                connection_count: root.connection_count;
+                last_refresh: root.last_refresh;
+                elevated: false;
             }
         }
+    }
+
+    // Compact widget layer
+    CompactView {
+        visible: root.compact_mode_open;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        rows: root.compact_rows;
+        always_on_top: true;
+        row_kill(pid) => { root.kill_requested(pid); }
+        open_full_window => { root.compact_mode_open = false; }
+        close_compact => { root.compact_mode_open = false; }
+    }
+
+    // Toasts: full-window overlay layer, anchored bottom-right
+    VerticalLayout {
+        horizontal-stretch: 1;
+        vertical-stretch: 1;
+        alignment: end;
+        padding: DesignTokens.space_md;
+        spacing: DesignTokens.space_sm;
+
+        for toast_data[i] in root.toasts : Toast {
+            message: toast_data.message;
+            toast_type: toast_data.toast_type;
+            visible: toast_data.visible;
+            dismissed => { root.toast_dismissed(i); }
+        }
+    }
+
+    // Modals layer
+    ConfirmKillModal {
+        visible: root.confirm_kill_open;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        process_name: root.kill_target_name;
+        pid: root.kill_target_pid;
+        port: root.kill_target_port;
+        protocol: root.kill_target_protocol;
+        confirmed => {
+            root.confirm_kill_open = false;
+            root.kill_confirmed(root.kill_target_pid);
+        }
+        cancelled => { root.confirm_kill_open = false; }
+    }
+
+    SettingsModal {
+        visible: root.settings_open;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        closed => { root.settings_open = false; }
+        theme_changed(dark) => { }
+        confirm_kill_changed(v) => { }
+        startup_in_tray_changed(v) => { }
+        security_mode_changed(v) => { }
+        refresh_rate_changed(v) => { }
+        history_retention_changed(v) => { }
     }
 }

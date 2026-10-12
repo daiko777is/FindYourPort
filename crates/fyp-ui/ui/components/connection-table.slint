@@ -1,0 +1,59 @@
+// Connection Table component - scrollable, sortable, filterable
+import { DesignTokens } from "../theme/tokens.slint";
+import { ConnectionRowData } from "../types.slint";
+import { ConnectionRow } from "connection-row.slint";
+
+export component ConnectionTable inherits Rectangle {
+    in property <[ConnectionRowData]> rows;
+    in property <string> search_query;
+    callback row_selected(string);
+    callback kill_requested(string);
+
+    VerticalLayout {
+        spacing: 2px;
+        vertical-stretch: 1;
+
+        Rectangle {
+            height: 32px;
+            background: DesignTokens.bg_secondary;
+            border-width: 1px;
+            border-color: DesignTokens.border_default;
+            border-radius: DesignTokens.radius_md;
+
+            HorizontalLayout {
+                padding-left: 16px;
+                padding-right: 16px;
+                spacing: 16px;
+
+                Text { text: "Proto"; font-size: 11px; font-weight: 700; color: DesignTokens.text_secondary; width: 50px; }
+                Text { text: "Local Port"; font-size: 11px; font-weight: 700; color: DesignTokens.text_secondary; width: 80px; }
+                Text { text: "Remote Address"; font-size: 11px; font-weight: 700; color: DesignTokens.text_secondary; width: 140px; }
+                Text { text: "State"; font-size: 11px; font-weight: 700; color: DesignTokens.text_secondary; width: 90px; }
+                Text { text: "Process"; font-size: 11px; font-weight: 700; color: DesignTokens.text_secondary; horizontal-stretch: 1; }
+                Text { text: "PID"; font-size: 11px; font-weight: 700; color: DesignTokens.text_secondary; width: 60px; }
+                Text { text: ""; width: 28px; }
+            }
+        }
+
+        VerticalLayout {
+            vertical-stretch: 1;
+            spacing: 0px;
+
+            for row[i] in root.rows : ConnectionRow {
+                protocol: row.protocol;
+                local_port: row.local_port;
+                remote_addr: row.remote_addr;
+                state: row.state;
+                state_color: row.state_color;
+                process_name: row.process_name;
+                process_initial: row.process_initial;
+                process_icon: row.process_icon;
+                pid: row.pid;
+                is_suspicious: row.is_suspicious;
+                is_unsigned: row.is_unsigned;
+                kill_clicked(pid) => { root.kill_requested(pid); }
+                row_clicked => { root.row_selected(row.pid); }
+            }
+        }
+    }
+}

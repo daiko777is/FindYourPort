@@ -1,0 +1,22 @@
+// Kill Button component - red skull button for terminating processes
+import { DesignTokens } from "../theme/tokens.slint";
+
+export component KillButton inherits Rectangle {
+    callback clicked();
+
+    width: 28px;
+    height: 28px;
+    background: DesignTokens.accent_red.transparentize(0.9);
+    border-radius: DesignTokens.radius_md;
+
+    Rectangle {
+        width: 14px;
+        height: 14px;
+        background: DesignTokens.accent_red;
+        border-radius: 2px;
+        x: parent.width / 2 - 7px;
+        y: parent.height / 2 - 7px;
+    }
+
+    TouchArea := TouchArea { clicked => { root.clicked(); } }
+}
